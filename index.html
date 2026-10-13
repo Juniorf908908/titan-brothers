@@ -104,7 +104,7 @@ const SFX={coin:()=>{beep(988,.06);setTimeout(()=>beep(1319,.12),50)},
 
 /* ---------- state ---------- */
 let lvl=0,score=0,lives=3,shield=0,mode='menu',t=0,msgT=0,msg='',cam={x:0},parts=[],pops=[];
-let P,ents,grid,rows,cols,flagX,spawnPt,deadT=0,winT=0;
+let P=null,ents=[],grid=[],rows=0,cols=0,flagX=0,spawnPt=[0,0],deadT=0,winT=0;
 const solid=c=>'#BL?'.includes(c);
 const key={},KMAP={ArrowLeft:'l',ArrowRight:'r',ArrowUp:'j',Space:'j',KeyA:'l',KeyD:'r',KeyW:'j'};
 addEventListener('keydown',e=>{const k=KMAP[e.code];if(k){key[k]=1;e.preventDefault()}
@@ -174,12 +174,13 @@ function step(){
   P.vy=Math.min(MAXFALL,P.vy+GRAV);
   // move X
   P.x+=P.vx;
-  if(collide(P.x,P.y,P.w,P.h)){while(collide(P.x,P.y,P.w,P.h))P.x-=Math.sign(P.vx)*.5;P.vx=0;}
+  if(collide(P.x,P.y,P.w,P.h)){let n=0;while(collide(P.x,P.y,P.w,P.h)&&n++<60)P.x-=(P.vx?Math.sign(P.vx):1)*.5;P.vx=0;}
   // move Y
   const wasG=P.onG;P.onG=0;P.y+=P.vy;
   if(collide(P.x,P.y,P.w,P.h)){
-    if(P.vy>0){while(collide(P.x,P.y,P.w,P.h))P.y-=.5;P.onG=1;if(!wasG&&P.vy>6)burst(P.x+16,P.y+40,'#8fa3ff',4,2);}
-    else{while(collide(P.x,P.y,P.w,P.h))P.y+=.5;}
+    let n=0;const s=P.vy>0?1:-1;
+    while(collide(P.x,P.y,P.w,P.h)&&n++<60)P.y-=s*.5;
+    if(P.vy>0){P.onG=1;if(!wasG&&P.vy>6)burst(P.x+16,P.y+40,'#8fa3ff',4,2);}
     P.vy=0;}
   P.inv>0&&P.inv--;P.anim+=Math.abs(P.vx)*.12;
   // fell in pit/lava
@@ -194,9 +195,8 @@ function step(){
       else{score+=100;SFX.gem();popText(e.x,e.y,'+100','#7dffce');burst(e.x+12,e.y+12,'#7dffce',14,5);}continue;}}
     if(e.dead){e.dead++;e.y+=3;e.vy=(e.vy||0)+GRAV;continue;}
     if(e.t==='walker'){e.vy=(e.vy||0)+GRAV;e.x+=e.vx;
-      if(collide(e.x,e.y,e.w,e.h)){e.vx*=-1;while(collide(e.x,e.y,e.w,e.h))e.x-=Math.sign(e.vx)*.5;}
-      e.y+=e.vy||0;if(collide(e.x,e.y,e.w,e.h)&&e.vy>0){while(collide(e.x,e.y,e.w,e.h))e.y-=.5;e.vy=0;}
-      if(tile(e.x+e.w/2,e.y+e.h+4)==='.'){} }
+      if(collide(e.x,e.y,e.w,e.h)){let n=0;while(collide(e.x,e.y,e.w,e.h)&&n++<60)e.x-=(e.vx?Math.sign(e.vx):1)*.5;e.vx*=-1;}
+      e.y+=e.vy||0;if(collide(e.x,e.y,e.w,e.h)&&e.vy>0){let n=0;while(collide(e.x,e.y,e.w,e.h)&&n++<60)e.y-=.5;e.vy=0;}}
     if(e.t==='flyer'){e.ph+=.05;e.x+=e.vx;e.y=e.base+Math.sin(e.ph)*28;
       if(solid(tile(e.x+(e.vx>0?e.w+2:-2),e.y+13)))e.vx*=-1;}
     if(e.t==='plat'){e.x+=e.vx;if(e.x<e.x0-140||e.x>e.x0+140)e.vx*=-1;}
